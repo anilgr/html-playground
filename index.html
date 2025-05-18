@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Live HTML Editor</title>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+
+    body.is-resizing {
+      cursor: col-resize;
+    }
+
+    body.is-resizing #preview {
+      pointer-events: none;
+    }
+
+    #preview {
+      pointer-events: all;
+    }
+
+    #editor {
+      flex-grow: 1;
+      flex-basis: 0px;
+      height: 100%;
+      padding: 1em;
+      font-family: monospace;
+      border: none;
+      box-sizing: border-box;
+      background: #111;
+      color: #9e9e9e;
+      overflow: auto;
+      white-space: pre;
+    }
+
+    #resizer {
+      cursor: col-resize;
+      position: relative;
+    }
+
+    iframe {
+      flex-grow: 1;
+      flex-basis: 0px;
+      height: 100%;
+      border: none;
+    }
+
+    #resizer .handle {
+      position: absolute;
+      width: 6px;
+      height: 26px;
+      top: 50%;
+      z-index: 10000;
+      background: #555;
+      transform: translate(-50%, -50%);
+      border-radius: 6px;
+      border-left: 1px solid white;
+      border-right: 1px solid black;
+    }
+
+    #preview,
+    #editor {
+      min-width: 0px;
+      min-height: 0px;
+    }
+
+    @media screen and (max-width: 768px) {
+      body {
+        flex-direction: column;
+        cursor: 'default';
+      }
+
+      body.is-resizing {
+        cursor: row-resize;
+      }
+
+      #resizer {
+        cursor: row-resize;
+      }
+
+      #resizer .handle {
+        height: 6px;
+        width: 26px;
+        left: 50%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="editor" contenteditable="true" spellcheck="false">
+    &lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;
+  </div>
+  <div id="resizer">
+    <div class="handle"></div>
+  </div>
+  <iframe id="preview"></iframe>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
+  <script>
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+
+    function updatePreview() {
+      preview.srcdoc = editor.textContent;
+    }
+
+    function debounce(func, delay) {
+      let timeoutId;
+      return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func(...args), delay);
+      };
+    }
+
+    editor.addEventListener('input', debounce(updatePreview, 1000));
+    window.addEventListener('DOMContentLoaded', updatePreview);
+  </script>
+
+  <!-- Editor Highlight and Caret Preservation -->
+  <script>
+    function getCaretOffset(el) {
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return 0;
+      const range = sel.getRangeAt(0);
+      const preRange = range.cloneRange();
+      preRange.selectNodeContents(el);
+      preRange.setEnd(range.endContainer, range.endOffset);
+      return preRange.toString().length;
+    }
+
+    function setCaretFromOffset(el, offset) {
+      const range = document.createRange();
+      const sel = window.getSelection();
+      let currentOffset = 0;
+
+      function recurse(node) {
+        if (node.nodeType === 3) {
+          const len = node.textContent.length;
+          if (offset <= currentOffset + len) {
+            range.setEnd(node, offset - currentOffset);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            throw 'done';
+          }
+          currentOffset += len;
+        } else {
+          for (const child of node.childNodes) recurse(child);
+        }
+      }
+
+      try {
+        recurse(el);
+      } catch (e) {
+        if (e !== 'done') throw e;
+      }
+    }
+
+    function highlightEditorContent(offsetOffset = 0) {
+      const offset = getCaretOffset(editor);
+      let rawText = editor.innerText;
+      rawText = rawText.replace(/\u000a/g, '\n')
+      console.log(rawText)
+      let highlighted = Prism.highlight(rawText, Prism.languages.html, 'html');
+      rawText.replace('\n', /\u000a/g)
+      editor.innerHTML = highlighted;
+      setCaretFromOffset(editor, offset);
+    }
+
+    highlightEditorContent();
+
+    editor.addEventListener('keydown', (e) => {
+      const selection = window.getSelection();
+      const range = selection.getRangeAt(0);
+      let offset = 1;
+      if (e.key === 'Enter') {
+        offset = 0
+        e.preventDefault();
+        const br = document.createElement('br');
+        const space = document.createTextNode('\u200B');
+        range.deleteContents();
+        range.insertNode(br);
+        range.collapse(false);
+        range.insertNode(space);
+        const newRange = document.createRange();
+        newRange.setStartAfter(space);
+        newRange.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      } else if (e.key === 'Backspace') {
+        range.deleteContents();
+      }
+
+      highlightEditorContent(offset);
+    });
+  </script>
+
+  <!-- Resizer Script -->
+  <script>
+    const resizer = document.getElementById('resizer');
+    let isResizing = false;
+
+    resizer.addEventListener('mousedown', function (e) {
+      isResizing = true;
+      document.body.classList.add('is-resizing');
+    });
+
+    window.addEventListener('mousemove', function (e) {
+      if (!isResizing) return;
+
+      if (window.innerWidth > 768) {
+        const newWidth = e.clientX;
+        editor.style.flexGrow = newWidth / window.innerWidth;
+        preview.style.flexGrow = 1 - newWidth / window.innerWidth
+      } else {
+        const newHeight = e.clientY;
+        editor.style.flexGrow = newHeight / window.innerHeight;
+        preview.style.flexGrow = 1 - newHeight / window.innerHeight
+      }
+    });
+
+    window.addEventListener('mouseup', function () {
+      if (isResizing) {
+        isResizing = false;
+        document.body.classList.remove('is-resizing');
+      }
+    });
+  </script>
+</body>
+
+</html>
