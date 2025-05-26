@@ -168,10 +168,12 @@
       const offset = getCaretOffset(editor);
       let rawText = editor.innerText;
       rawText = rawText.replace(/\u000a/g, '\n')
-      console.log(rawText)
+      rawText = rawText.replaceAll(/\u200B/g, '')
+      
       let highlighted = Prism.highlight(rawText, Prism.languages.html, 'html');
-      rawText.replace('\n', /\u000a/g)
+      
       editor.innerHTML = highlighted;
+      
       setCaretFromOffset(editor, offset);
     }
 
