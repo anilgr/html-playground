@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live HTML Editor</title>
   <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" rel="stylesheet">
   <style>
@@ -12,10 +13,12 @@
       margin: 0;
       font-family: sans-serif;
       overflow: hidden;
+      touch-action: none;
     }
 
     body.is-resizing {
       cursor: col-resize;
+      user-select: none;
     }
 
     body.is-resizing #preview {
@@ -43,6 +46,7 @@
     #resizer {
       cursor: col-resize;
       position: relative;
+      z-index: 1;
     }
 
     iframe {
@@ -53,16 +57,20 @@
     }
 
     #resizer .handle {
-      position: absolute;
-      width: 6px;
+      width: 8px;
       height: 26px;
-      top: 50%;
-      z-index: 10000;
       background: #555;
-      transform: translate(-50%, -50%);
       border-radius: 6px;
       border-left: 1px solid white;
       border-right: 1px solid black;
+    }
+
+    #resizer .handle-wrapper {
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      padding: 16px;
+      position: absolute;
+      top: 50%;
     }
 
     #preview,
@@ -73,8 +81,9 @@
 
     @media screen and (max-width: 768px) {
       body {
+        display: flex;
         flex-direction: column;
-        cursor: 'default';
+        cursor: default;
       }
 
       body.is-resizing {
@@ -86,8 +95,12 @@
       }
 
       #resizer .handle {
-        height: 6px;
+        height: 8px;
         width: 26px;
+        left: 50%;
+      }
+
+      #resizer .handle-wrapper {
         left: 50%;
       }
     }
@@ -95,11 +108,11 @@
 </head>
 
 <body>
-  <div id="editor" contenteditable="true" spellcheck="false">
-    &lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;
-  </div>
+  <div id="editor" contenteditable="true" spellcheck="false">&lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;</div>
   <div id="resizer">
-    <div class="handle"></div>
+    <div class="handle-wrapper">
+      <div class="handle"></div>
+    </div>
   </div>
   <iframe id="preview"></iframe>
 
@@ -169,11 +182,11 @@
       let rawText = editor.innerText;
       rawText = rawText.replace(/\u000a/g, '\n')
       rawText = rawText.replaceAll(/\u200B/g, '')
-      
+
       let highlighted = Prism.highlight(rawText, Prism.languages.html, 'html');
-      
+
       editor.innerHTML = highlighted;
-      
+
       setCaretFromOffset(editor, offset);
     }
 
@@ -210,12 +223,12 @@
     const resizer = document.getElementById('resizer');
     let isResizing = false;
 
-    resizer.addEventListener('mousedown', function (e) {
+    resizer.addEventListener('pointerdown', function (e) {
       isResizing = true;
       document.body.classList.add('is-resizing');
     });
 
-    window.addEventListener('mousemove', function (e) {
+    window.addEventListener('pointermove', function (e) {
       if (!isResizing) return;
 
       if (window.innerWidth > 768) {
@@ -229,7 +242,7 @@
       }
     });
 
-    window.addEventListener('mouseup', function () {
+    window.addEventListener('pointerup', function () {
       if (isResizing) {
         isResizing = false;
         document.body.classList.remove('is-resizing');
