@@ -145,7 +145,7 @@
         timeoutId = setTimeout(() => func(...args), delay);
       };
     }
-
+    editor.addEventListener('paste', ()=>setTimeout(()=>highlightEditorContent(),100));
     editor.addEventListener('input', debounce(updatePreview, 1000));
     window.addEventListener('DOMContentLoaded', updatePreview);
   </script>
