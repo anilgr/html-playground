@@ -78,6 +78,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      box-sizing: border-box;
     }
 
     #preview,
@@ -89,7 +90,7 @@
     @media screen and (max-width: 768px) {
       body {
         display: flex;
-        flex-direction: column;
+        flex-direction: column-reverse;
         cursor: default;
       }
 
@@ -250,8 +251,8 @@
         preview.style.flexGrow = 1 - newWidth / window.innerWidth
       } else {
         const newHeight = e.clientY;
-        editor.style.flexGrow = newHeight / window.innerHeight;
-        preview.style.flexGrow = 1 - newHeight / window.innerHeight
+        editor.style.flexGrow = 1 - newHeight / window.innerHeight;
+        preview.style.flexGrow = newHeight / window.innerHeight
       }
     });
 
