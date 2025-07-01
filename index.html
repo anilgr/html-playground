@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Live HTML Editor</title>
   <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" rel="stylesheet">
-  <link rel="icon"
-    href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGNsYXNzPSJpb25pY29uIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgZmlsbD0id2hpdGUiPjxyZWN0IHg9IjMzNiIgeT0iMzM2IiB3aWR0aD0iODAiIGhlaWdodD0iODAiIHJ4PSI4IiByeT0iOCIvPjxyZWN0IHg9IjI3MiIgeT0iMjcyIiB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSI4IiByeT0iOCIvPjxyZWN0IHg9IjQxNiIgeT0iNDE2IiB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSI4IiByeT0iOCIvPjxyZWN0IHg9IjQzMiIgeT0iMjcyIiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSI4IiByeT0iOCIvPjxyZWN0IHg9IjI3MiIgeT0iNDMyIiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSI4IiByeT0iOCIvPjxwYXRoIGQ9Ik00NDggMzJIMzA0YTMyIDMyIDAgMDAtMzIgMzJ2MTQ0YTMyIDMyIDAgMDAzMiAzMmgxNDRhMzIgMzIgMCAwMDMyLTMyVjY0YTMyIDMyIDAgMDAtMzItMzJ6bS0zMiAxMzZhOCA4IDAgMDEtOCA4aC02NGE4IDggMCAwMS04LTh2LTY0YTggOCAwIDAxOC04aDY0YTggOCAwIDAxOCA4ek0yMDggMzJINjRhMzIgMzIgMCAwMC0zMiAzMnYxNDRhMzIgMzIgMCAwMDMyIDMyaDE0NGEzMiAzMiAwIDAwMzItMzJWNjRhMzIgMzIgMCAwMC0zMi0zMnptLTMyIDEzNmE4IDggMCAwMS04IDhoLTY0YTggOCAwIDAxLTgtOHYtNjRhOCA4IDAgMDE4LThoNjRhOCA4IDAgMDE4IDh6TTIwOCAyNzJINjRhMzIgMzIgMCAwMC0zMiAzMnYxNDRhMzIgMzIgMCAwMDMyIDMyaDE0NGEzMiAzMiAwIDAwMzItMzJWMzA0YTMyIDMyIDAgMDAtMzItMzJ6bS0zMiAxMzZhOCA4IDAgMDEtOCA4aC02NGE4IDggMCAwMS04LTh2LTY0YTggOCAwIDAxOC04aDY0YTggOCAwIDAxOCA4eiIvPjwvc3ZnPg==">
   <style>
     body {
       display: flex;
@@ -27,22 +24,22 @@
       pointer-events: none;
     }
 
-    #preview {
-      pointer-events: all;
-    }
-
     #editor {
       flex-grow: 1;
-      flex-basis: 0px;
+      flex-basis: 0;
       height: 100%;
       padding: 1em;
       font-family: monospace;
       border: none;
       box-sizing: border-box;
       background: #111;
-      color: #9e9e9e;
+      color: #ccc;
       overflow: auto;
-      white-space: pre;
+      white-space: pre-wrap;
+    }
+
+    #editor[contenteditable]:focus {
+      outline: none;
     }
 
     #resizer {
@@ -53,7 +50,7 @@
 
     iframe {
       flex-grow: 1;
-      flex-basis: 0px;
+      flex-basis: 0;
       height: 100%;
       border: none;
     }
@@ -83,13 +80,12 @@
 
     #preview,
     #editor {
-      min-width: 0px;
-      min-height: 0px;
+      min-width: 0;
+      min-height: 0;
     }
 
     @media screen and (max-width: 768px) {
       body {
-        display: flex;
         flex-direction: column-reverse;
         cursor: default;
       }
@@ -111,21 +107,23 @@
       #resizer .handle-wrapper {
         left: 50%;
         width: 100%;
-        display: flex;
         flex-direction: row;
         justify-content: center;
       }
     }
   </style>
 </head>
-
 <body>
-  <div id="editor" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">&lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;</div>
+  <div id="editor" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">
+&lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;
+  </div>
+
   <div id="resizer">
     <div class="handle-wrapper">
       <div class="handle"></div>
     </div>
   </div>
+
   <iframe id="preview"></iframe>
 
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
@@ -133,29 +131,17 @@
     const editor = document.getElementById('editor');
     const preview = document.getElementById('preview');
 
-    document.body.style.height = `${window.innerHeight}px`
-
-    function updatePreview() {
-      preview.srcdoc = editor.textContent;
-    }
-
     function debounce(func, delay) {
-      let timeoutId;
+      let timeout;
       return function (...args) {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func(...args), delay);
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), delay);
       };
     }
-    editor.addEventListener('paste', ()=>setTimeout(()=>highlightEditorContent(),100));
-    editor.addEventListener('input', debounce(updatePreview, 1000));
-    window.addEventListener('DOMContentLoaded', updatePreview);
-  </script>
 
-  <!-- Editor Highlight and Caret Preservation -->
-  <script>
     function getCaretOffset(el) {
       const sel = window.getSelection();
-      if (!sel.rangeCount) return 0;
+      if (!sel.rangeCount || !el.contains(sel.anchorNode)) return 0;
       const range = sel.getRangeAt(0);
       const preRange = range.cloneRange();
       preRange.selectNodeContents(el);
@@ -168,7 +154,7 @@
       const sel = window.getSelection();
       let currentOffset = 0;
 
-      function recurse(node) {
+      function traverse(node) {
         if (node.nodeType === 3) {
           const len = node.textContent.length;
           if (offset <= currentOffset + len) {
@@ -180,38 +166,42 @@
           }
           currentOffset += len;
         } else {
-          for (const child of node.childNodes) recurse(child);
+          for (const child of node.childNodes) traverse(child);
         }
       }
 
       try {
-        recurse(el);
+        traverse(el);
       } catch (e) {
         if (e !== 'done') throw e;
       }
     }
 
-    function highlightEditorContent(offsetOffset = 0) {
+    function highlightEditorContent() {
       const offset = getCaretOffset(editor);
-      let rawText = editor.innerText;
-      rawText = rawText.replace(/\u000a/g, '\n')
-      rawText = rawText.replaceAll(/\u200B/g, '')
-
-      let highlighted = Prism.highlight(rawText, Prism.languages.html, 'html');
-
+      const raw = editor.innerText.replace(/\u200b/g, '');
+      const highlighted = Prism.highlight(raw, Prism.languages.html, 'html');
       editor.innerHTML = highlighted;
-
       setCaretFromOffset(editor, offset);
     }
 
-    highlightEditorContent();
+    function updatePreview() {
+      preview.srcdoc = editor.innerText.replace(/\u200b/g, '');
+    }
+
+    editor.addEventListener('input', debounce(() => {
+      updatePreview();
+    }, 300));
+
+    editor.addEventListener('input', debounce(() => {
+      highlightEditorContent();
+    }, 0));
 
     editor.addEventListener('keydown', (e) => {
       const selection = window.getSelection();
       const range = selection.getRangeAt(0);
-      let offset = 1;
+
       if (e.key === 'Enter') {
-        offset = 0
         e.preventDefault();
         const br = document.createElement('br');
         const space = document.createTextNode('\u200B');
@@ -224,45 +214,60 @@
         newRange.collapse(false);
         selection.removeAllRanges();
         selection.addRange(newRange);
-      } else if (e.key === 'Backspace') {
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const tab = document.createTextNode('  '); // Two spaces instead of \t
         range.deleteContents();
+        range.insertNode(tab);
+        range.collapse(false);
+        updatePreview();
       }
-
-      highlightEditorContent(offset);
     });
-  </script>
 
-  <!-- Resizer Script -->
-  <script>
+    editor.addEventListener('paste', () => {
+      setTimeout(() => highlightEditorContent(), 100);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updatePreview();
+      highlightEditorContent();
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+
+    // Resizer logic
     const resizer = document.getElementById('resizer');
     let isResizing = false;
 
-    resizer.addEventListener('pointerdown', function (e) {
+    resizer.addEventListener('pointerdown', () => {
       isResizing = true;
       document.body.classList.add('is-resizing');
     });
 
-    window.addEventListener('pointermove', function (e) {
+    window.addEventListener('pointermove', (e) => {
       if (!isResizing) return;
 
       if (window.innerWidth > 768) {
         const newWidth = e.clientX;
-        editor.style.flexGrow = newWidth / window.innerWidth;
-        preview.style.flexGrow = 1 - newWidth / window.innerWidth
+        const ratio = newWidth / window.innerWidth;
+        editor.style.flexGrow = ratio;
+        preview.style.flexGrow = 1 - ratio;
       } else {
         const newHeight = e.clientY;
-        editor.style.flexGrow = 1 - newHeight / window.innerHeight;
-        preview.style.flexGrow = newHeight / window.innerHeight
+        const ratio = newHeight / window.innerHeight;
+        preview.style.flexGrow = ratio;
+        editor.style.flexGrow = 1 - ratio;
       }
     });
 
-    window.addEventListener('pointerup', function () {
-      if (isResizing) {
-        isResizing = false;
-        document.body.classList.remove('is-resizing');
-      }
+    window.addEventListener('pointerup', () => {
+      isResizing = false;
+      document.body.classList.remove('is-resizing');
     });
   </script>
 </body>
-
 </html>
