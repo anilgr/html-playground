@@ -29,9 +29,16 @@
       pointer-events: none;
     }
 
-    #editor {
+    #editorWrapper {
       flex-grow: 1;
       flex-basis: 0;
+      height: 100%;
+      overflow: auto;
+      position: relative;
+      border-right: 1px solid #222;
+    }
+
+    #editor {
       height: 100%;
       padding: 1em;
       font-family: monospace;
@@ -85,15 +92,16 @@
     }
 
     #preview,
-    #editor {
+    #editorWrapper {
       min-width: 0;
       min-height: 0;
     }
 
-    #buttonsWrapper {
-      position: fixed;
-      right: 0;
-      top: 0;
+    #optionsMenu {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      padding: 4px;
     }
 
     @media screen and (max-width: 768px) {
@@ -122,17 +130,116 @@
         flex-direction: row;
         justify-content: center;
       }
+
+      #editorWrapper {
+        border-top: 1px solid #222;
+        border-right: none;
+      }
     }
   </style>
 </head>
 
 <body>
-  <div id="buttonsWrapper">
-    <button id="openHTML">Open</button>
-    <button id="downloadHTML">Download</button>
-  </div>
-  <div id="editor" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">
-    &lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;</div>
+  <div id="editorWrapper">
+    <div id="optionsMenu">
+      <style>
+        #optionsMenu {
+          position: absolute;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+        #optionsMenu>div:first-child {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+        }
+
+        #optionsMenu svg {
+          display: block;
+        }
+
+        #optionsMenuItems {
+          position: absolute;
+          top: calc(100% + 16px);
+          right: 16px;
+          background-color: #111;
+          border: 1px solid #222;
+          border-radius: 5px;
+          z-index: 1000;
+          display: none;
+          flex-direction: column;
+          padding: 5px;
+          min-width: 120px;
+        }
+
+        #optionsMenuItems.show {
+          display: flex;
+        }
+
+        #optionsMenuItems button {
+          background-color: transparent;
+          border: none;
+          padding: 10px 15px;
+          border-radius: 3px;
+          text-align: left;
+          width: 100%;
+          cursor: pointer;
+          font-size: 14px;
+          color: #eee;
+          transition: background-color 0.2s ease;
+        }
+
+        #optionsMenuItems button:hover {
+          background-color: #333;
+        }
+      </style>
+
+      <div id="menuIconContainer">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="5" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="12" cy="19" r="2" />
+        </svg>
+      </div>
+
+      <div id="optionsMenuItems">
+        <button id="optionsMenuItemOpenHTML">Open</button>
+        <button id="optionsMenuItemDownloadHTML">Download</button>
+      </div>
+
+      <script>
+        const menuIconContainer = document.getElementById('menuIconContainer');
+        const optionsMenuItems = document.getElementById('optionsMenuItems');
+
+        menuIconContainer.addEventListener('click', function (event) {
+          event.stopPropagation();
+          optionsMenuItems.classList.toggle('show');
+        });
+
+        document.addEventListener('click', function (event) {
+          if (!optionsMenu.contains(event.target) && optionsMenuItems.classList.contains('show')) {
+            optionsMenuItems.classList.remove('show');
+          }
+        });
+
+        document.getElementById('optionsMenuItemOpenHTML').addEventListener('click', function () {
+          optionsMenuItems.classList.remove('show');
+        });
+
+        document.getElementById('optionsMenuItemDownloadHTML').addEventListener('click', function () {
+          optionsMenuItems.classList.remove('show');
+        });
+      </script>
+    </div>
+    <div id="editor" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off"
+      autocorrect="off">&lt;!DOCTYPE html&gt;&#10;&lt;html lang=&quot;en&quot;&gt;&#10;&lt;head&gt;&#10;&nbsp;&nbsp;&lt;meta charset=&quot;UTF-8&quot;&gt;&#10;&nbsp;&nbsp;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;&#10;&nbsp;&nbsp;&lt;title&gt;Hello World&lt;/title&gt;&#10;&lt;/head&gt;&#10;&lt;body&gt;&#10;&nbsp;&nbsp;&lt;h1&gt;Hello World&lt;/h1&gt;&#10;&lt;/body&gt;&#10;&lt;/html&gt;&#10;</div>
+    </div>
   <div id="resizer">
     <div class="handle-wrapper">
       <div class="handle"></div>
@@ -146,7 +253,7 @@
     const editor = document.getElementById('editor');
     const preview = document.getElementById('preview');
 
-    downloadHTML.addEventListener("click", () => {
+    optionsMenuItemDownloadHTML.addEventListener("click", () => {
       const htmlText = getEditorContent();
       const blob = new Blob([htmlText], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
@@ -159,7 +266,7 @@
       URL.revokeObjectURL(url);
     })
 
-    openHTML.addEventListener('click', () => {
+    optionsMenuItemOpenHTML.addEventListener('click', () => {
       const elem = document.createElement("input");
       elem.type = "file";
       elem.accept = "text/html"
@@ -168,7 +275,7 @@
       });
       elem.addEventListener("change", () => {
         if (elem.files.length === 1) {
-          elem.files[0].text().then((text)=>{
+          elem.files[0].text().then((text) => {
             editor.innerText = text;
             highlightEditorContent();
             updatePreview();
@@ -306,13 +413,13 @@
       if (window.innerWidth > 768) {
         const newWidth = e.clientX;
         const ratio = newWidth / window.innerWidth;
-        editor.style.flexGrow = ratio;
+        editorWrapper.style.flexGrow = ratio;
         preview.style.flexGrow = 1 - ratio;
       } else {
         const newHeight = e.clientY;
         const ratio = newHeight / window.innerHeight;
         preview.style.flexGrow = ratio;
-        editor.style.flexGrow = 1 - ratio;
+        editorWrapper.style.flexGrow = 1 - ratio;
       }
     });
 
