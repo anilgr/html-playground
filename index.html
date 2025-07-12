@@ -90,7 +90,7 @@
       min-height: 0;
     }
 
-    #downloadHTML {
+    #buttonsWrapper {
       position: fixed;
       right: 0;
       top: 0;
@@ -127,7 +127,10 @@
 </head>
 
 <body>
-  <button id="downloadHTML">Download</button>
+  <div id="buttonsWrapper">
+    <button id="openHTML">Open</button>
+    <button id="downloadHTML">Download</button>
+  </div>
   <div id="editor" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">
     &lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;</div>
   <div id="resizer">
@@ -144,7 +147,7 @@
     const preview = document.getElementById('preview');
 
     downloadHTML.addEventListener("click", () => {
-      const htmlText = getEditorContent(); 
+      const htmlText = getEditorContent();
       const blob = new Blob([htmlText], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -154,6 +157,25 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    })
+
+    openHTML.addEventListener('click', () => {
+      const elem = document.createElement("input");
+      elem.type = "file";
+      elem.accept = "text/html"
+      elem.addEventListener("cancel", () => {
+        console.log("Cancelled.");
+      });
+      elem.addEventListener("change", () => {
+        if (elem.files.length === 1) {
+          elem.files[0].text().then((text)=>{
+            editor.innerText = text;
+            highlightEditorContent();
+            updatePreview();
+          })
+        }
+      });
+      elem.click();
     })
 
     function debounce(func, delay) {
