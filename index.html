@@ -7,7 +7,6 @@
   <title>Live HTML Editor</title>
   <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" rel="stylesheet">
   <style>
-    
     html {
       height: 100%;
     }
@@ -91,6 +90,12 @@
       min-height: 0;
     }
 
+    #downloadHTML {
+      position: fixed;
+      right: 0;
+      top: 0;
+    }
+
     @media screen and (max-width: 768px) {
       body {
         flex-direction: column-reverse;
@@ -122,7 +127,9 @@
 </head>
 
 <body>
-  <div id="editor" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">&lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;</div>
+  <button id="downloadHTML">Download</button>
+  <div id="editor" contenteditable="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">
+    &lt;div class="box"&gt;<br>&nbsp;&nbsp;&lt;p&gt;Hello&lt;/p&gt;<br>&lt;/div&gt;</div>
   <div id="resizer">
     <div class="handle-wrapper">
       <div class="handle"></div>
@@ -135,6 +142,19 @@
   <script>
     const editor = document.getElementById('editor');
     const preview = document.getElementById('preview');
+
+    downloadHTML.addEventListener("click", () => {
+      const htmlText = getEditorContent(); 
+      const blob = new Blob([htmlText], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (htmlText.match(/<title>(.+)<\/title>/)?.[1] || "index") + ".html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    })
 
     function debounce(func, delay) {
       let timeout;
@@ -191,8 +211,12 @@
       setCaretFromOffset(editor, offset);
     }
 
+    function getEditorContent() {
+      return editor.innerText.replaceAll(/\u200b/g, '').replaceAll("\u00a0", "");
+    }
+
     function updatePreview() {
-      preview.srcdoc = editor.innerText.replaceAll(/\u200b/g, '').replaceAll("\u00a0", "");
+      preview.srcdoc = getEditorContent();
     }
 
     editor.addEventListener('input', debounce(() => {
